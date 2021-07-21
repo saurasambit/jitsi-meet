@@ -59,8 +59,10 @@ var config = {
         // simulcast is turned off for the desktop share. If presenter is turned
         // on while screensharing is in progress, the max bitrate is automatically
         // adjusted to 2.5 Mbps. This takes a value between 0 and 1 which determines
-        // the probability for this to be enabled.
-        // capScreenshareBitrate: 1 // 0 to disable
+        // the probability for this to be enabled. This setting has been deprecated.
+        // desktopSharingFrameRate.max now determines whether simulcast will be enabled
+        // or disabled for the screenshare.
+        // capScreenshareBitrate: 1 // 0 to disable - deprecated.
 
         // Enable callstats only for a percentage of users.
         // This takes a value between 0 and 100 which determines the probability for
@@ -80,6 +82,9 @@ var config = {
     // Media
     //
 
+    // Enable unified plan implementation support on Chromium based browsers.
+    // enableUnifiedOnChrome: false,
+
     // Audio
 
     // Disable measuring of audio levels.
@@ -95,6 +100,10 @@ var config = {
     // used to collect debug information (XMPP IQs, SDP offer/answer cycles)
     // about the call.
     // enableSaveLogs: false,
+
+    // Enabling this will hide the "Show More" link in the GSM popover that can be
+    // used to display more statistics about the connection (IP, Port, protocol, etc).
+    // disableShowMoreStats: true,
 
     // Enabling this will run the lib-jitsi-meet noise detection module which will
     // notify the user if there is noise, other than voice, coming from the current
@@ -225,6 +234,11 @@ var config = {
 
     // Default value for the channel "last N" attribute. -1 for unlimited.
     channelLastN: -1,
+
+    // Provides a way for the lastN value to be controlled through the UI.
+    // When startLastN is present, conference starts with a last-n value of startLastN and channelLastN
+    // value will be used when the quality level is selected using "Manage Video Quality" slider.
+    // startLastN: 1,
 
     // Provides a way to use different "last N" values based on the number of participants in the conference.
     // The keys in an Object represent number of participants and the values are "last N" to be used when number of
@@ -382,7 +396,9 @@ var config = {
     // enableClosePage: false,
 
     // Disable hiding of remote thumbnails when in a 1-on-1 conference call.
-    // disable1On1Mode: false,
+    // Setting this to null, will also disable showing the remote videos
+    // when the toolbar is shown on mouse movements
+    // disable1On1Mode: null | false | true,
 
     // Default language for the user interface.
     // defaultLanguage: 'en',
@@ -427,6 +443,10 @@ var config = {
     // Base URL for a Gravatar-compatible service. Defaults to libravatar.
     // gravatarBaseURL: 'https://seccdn.libravatar.org/avatar/',
 
+    // App name to be displayed in the invitation email subject, as an alternative to
+    // interfaceConfig.APP_NAME.
+    // inviteAppName: null,
+
     // Moved from interfaceConfig(TOOLBAR_BUTTONS).
     // The name of the toolbar buttons to display in the toolbar, including the
     // "More actions" menu. If present, the button will display. Exceptions are
@@ -440,7 +460,7 @@ var config = {
     // - if `toolbarButtons` is undefined, we fallback to enabling all buttons on the UI
     // toolbarButtons: [
     //    'microphone', 'camera', 'closedcaptions', 'desktop', 'embedmeeting', 'fullscreen',
-    //    'fodeviceselection', 'hangup', 'profile', 'chat', 'recording',
+    //    'fodeviceselection', 'hangup', 'profile', 'participants-pane', 'chat', 'recording',
     //    'livestreaming', 'etherpad', 'sharedvideo', 'shareaudio', 'settings', 'raisehand',
     //    'videoquality', 'filmstrip', 'invite', 'feedback', 'stats', 'shortcuts',
     //    'tileview', 'select-background', 'download', 'help', 'mute-everyone', 'mute-video-everyone', 'security'
@@ -493,6 +513,9 @@ var config = {
         // 3rd participant joins the conference will be moved back to the JVB
         // connection.
         enabled: true,
+
+        // Enable unified plan implementation support on Chromium for p2p connection.
+        // enableUnifiedOnChrome: false,
 
         // Sets the ICE transport policy for the p2p connection. At the time
         // of this writing the list of possible values are 'all' and 'relay',
@@ -580,6 +603,9 @@ var config = {
     // conference (if set to true, these sounds will not be played).
     // disableJoinLeaveSounds: false,
 
+    // Disables the sounds that play when a chat message is received.
+    // disableIncomingMessageSound: false,
+
     // Information for the chrome extension banner
     // chromeExtensionBanner: {
     //     // The chrome extension to be installed address
@@ -600,8 +626,8 @@ var config = {
     // localRecording: {
     // Enables local recording.
     // Additionally, 'localrecording' (all lowercase) needs to be added to
-    // TOOLBAR_BUTTONS in interface_config.js for the Local Recording
-    // button to show up on the toolbar.
+    // the `toolbarButtons`-array for the Local Recording button to show up
+    // on the toolbar.
     //
     //     enabled: true,
     //
@@ -664,7 +690,9 @@ var config = {
     // Options related to the remote participant menu.
     // remoteVideoMenu: {
     //     // If set to true the 'Kick out' button will be disabled.
-    //     disableKick: true
+    //     disableKick: true,
+    //     // If set to true the 'Grant moderator' button will be disabled.
+    //     disableGrantModerator: true
     // },
 
     // If set to true all muting operations of remote participants will be disabled.
@@ -676,8 +704,11 @@ var config = {
     /**
      External API url used to receive branding specific information.
      If there is no url set or there are missing fields, the defaults are applied.
+     The config file should be in JSON.
      None of the fields are mandatory and the response must have the shape:
      {
+         // The domain url to apply (will replace the domain in the sharing conference link/embed section)
+         inviteDomain: 'example-company.org,
          // The hex value for the colour used as background
          backgroundColor: '#fff',
          // The url for the image used as background
@@ -704,6 +735,9 @@ var config = {
     // Hides the conference subject
     // hideConferenceSubject: true,
 
+    // Hides the recording label
+    // hideRecordingLabel: false,
+
     // Hides the conference timer.
     // hideConferenceTimer: true,
 
@@ -718,6 +752,18 @@ var config = {
     // is not persisting the local storage inside the iframe.
     // useHostPageLocalStorage: true,
 
+    // etherpad ("shared document") integration.
+    //
+
+    // If set, add a "Open shared document" link to the bottom right menu that
+    // will open an etherpad document.
+    // etherpad_base: 'https://your-etherpad-installati.on/p/',
+
+    // If etherpad_base is set, and useRoomAsSharedDocumentName is set to true,
+    // open a pad with the name of the room (lowercased) instead of a pad with a
+    // random UUID.
+    // useRoomAsSharedDocumentName: true,
+
     // List of undocumented settings used in jitsi-meet
     /**
      _immediateReloadThreshold
@@ -730,7 +776,6 @@ var config = {
      dialOutCodesUrl
      disableRemoteControl
      displayJids
-     etherpad_base
      externalConnectUrl
      firefox_fake_device
      googleApiApplicationClientID
@@ -772,6 +817,11 @@ var config = {
      websocketKeepAlive
      websocketKeepAliveUrl
      */
+
+    /**
+     * Default interval (milliseconds) for triggering mouseMoved iframe API event
+     */
+    mouseMoveCallbackInterval: 1000,
 
     /**
         Use this array to configure which notifications will be shown to the user
@@ -832,7 +882,10 @@ var config = {
     //     'toolbar.noisyAudioInputTitle', // shown when noise is detected for the current microphone
     //     'toolbar.talkWhileMutedPopup', // shown when user tries to speak while muted
     //     'transcribing.failedToStart' // shown when transcribing fails to start
-    // ]
+    // ],
+
+    // Prevent the filmstrip from autohiding when screen width is under a certain threshold
+    // disableFilmstripAutohiding: false,
 
     // Allow all above example options to include a trailing comma and
     // prevent fear when commenting out the last value.
